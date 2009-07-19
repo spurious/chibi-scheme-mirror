@@ -1,8 +1,8 @@
 
-#define _OP(c,o,n,m,t,u,i,s,f,d) \
-  {.tag=SEXP_OPCODE,             \
-   .value={.opcode={c, o, n, m, t, u, i, s, d, f, NULL}}}
-#define _FN(o,n,m,t,u,s,f,d) _OP(OPC_FOREIGN, o, n, m, t, u, 0, s, f, (sexp)d)
+#define _OP(c,o,n,m,t,u,i,s,d,f)                                \
+  {.tag=SEXP_OPCODE,                                            \
+      .value={.opcode={c, o, n, m, t, u, i, s, d, NULL, f}}}
+#define _FN(o,n,m,t,u,s,f,p) _OP(OPC_FOREIGN, o, n, m, t, u, 0, s, f, (sexp_proc0)p)
 #define _FN0(s, f, d) _FN(OP_FCALL0, 0, 0, 0, 0, s, f, d)
 #define _FN1(t, s, f, d) _FN(OP_FCALL1, 1, 0, t, 0, s, f, d)
 #define _FN2(t, u, s, f, d) _FN(OP_FCALL2, 2, 0, t, u, s, f, d)
@@ -45,19 +45,19 @@ _OP(OPC_PREDICATE,      OP_EQ,  2, 0, 0, 0, 0, "eq?", 0, NULL),
 _OP(OPC_CONSTRUCTOR,    OP_CONS, 2, 0, 0, 0, 0, "cons", 0, NULL),
 _OP(OPC_CONSTRUCTOR,    OP_MAKE_VECTOR, 1, 1, SEXP_FIXNUM, 0, 0, "make-vector", SEXP_VOID, NULL),
 _OP(OPC_CONSTRUCTOR,    OP_MAKE_PROCEDURE, 4, 0, 0, 0, 0, "make-procedure", 0, NULL),
-_OP(OPC_TYPE_PREDICATE, OP_NULLP,  1, 0, 0, 0, 0, "null?", 0, NULL),
-_OP(OPC_TYPE_PREDICATE, OP_EOFP,  1, 0, 0, 0, 0, "eof-object?", 0, NULL),
-_OP(OPC_TYPE_PREDICATE, OP_SYMBOLP,  1, 0, 0, 0, 0, "symbol?", 0, NULL),
-_OP(OPC_TYPE_PREDICATE, OP_CHARP,  1, 0, 0, 0, 0, "char?", 0, NULL),
-_OP(OPC_TYPE_PREDICATE, OP_INTEGERP,  1, 0, 0, 0, 0, "fixnum?", 0, NULL),
-_OP(OPC_TYPE_PREDICATE, OP_TYPEP,  1, 0, 0, 0, 0, "pair?", 0, (sexp)SEXP_PAIR),
-_OP(OPC_TYPE_PREDICATE, OP_TYPEP,  1, 0, 0, 0, 0, "string?", 0, (sexp)SEXP_STRING),
-_OP(OPC_TYPE_PREDICATE, OP_TYPEP,  1, 0, 0, 0, 0, "vector?", 0, (sexp)SEXP_VECTOR),
-_OP(OPC_TYPE_PREDICATE, OP_TYPEP,  1, 0, 0, 0, 0, "flonum?", 0, (sexp)SEXP_FLONUM),
-_OP(OPC_TYPE_PREDICATE, OP_TYPEP,  1, 0, 0, 0, 0, "closure?", 0, (sexp)SEXP_PROCEDURE),
-_OP(OPC_TYPE_PREDICATE, OP_TYPEP,  1, 0, 0, 0, 0, "opcode?", 0, (sexp)SEXP_OPCODE),
-_OP(OPC_TYPE_PREDICATE, OP_TYPEP,  1, 0, 0, 0, 0, "input-port?", 0, (sexp)SEXP_IPORT),
-_OP(OPC_TYPE_PREDICATE, OP_TYPEP,  1, 0, 0, 0, 0, "output-port?", 0, (sexp)SEXP_OPORT),
+_OP(OPC_TYPE_PREDICATE, OP_NULLP,  1, 0, 0, 0, 0, "null?", NULL, 0),
+_OP(OPC_TYPE_PREDICATE, OP_EOFP,  1, 0, 0, 0, 0, "eof-object?", NULL, 0),
+_OP(OPC_TYPE_PREDICATE, OP_SYMBOLP,  1, 0, 0, 0, 0, "symbol?", NULL, 0),
+_OP(OPC_TYPE_PREDICATE, OP_CHARP,  1, 0, 0, 0, 0, "char?", NULL, 0),
+_OP(OPC_TYPE_PREDICATE, OP_INTEGERP,  1, 0, 0, 0, 0, "fixnum?", NULL, 0),
+_OP(OPC_TYPE_PREDICATE, OP_TYPEP,  1, 0, 0, 0, 0, "pair?", sexp_make_integer(SEXP_PAIR), 0),
+_OP(OPC_TYPE_PREDICATE, OP_TYPEP,  1, 0, 0, 0, 0, "string?", sexp_make_integer(SEXP_STRING), 0),
+_OP(OPC_TYPE_PREDICATE, OP_TYPEP,  1, 0, 0, 0, 0, "vector?", sexp_make_integer(SEXP_VECTOR), 0),
+_OP(OPC_TYPE_PREDICATE, OP_TYPEP,  1, 0, 0, 0, 0, "flonum?", sexp_make_integer(SEXP_FLONUM), 0),
+_OP(OPC_TYPE_PREDICATE, OP_TYPEP,  1, 0, 0, 0, 0, "closure?", sexp_make_integer(SEXP_PROCEDURE), 0),
+_OP(OPC_TYPE_PREDICATE, OP_TYPEP,  1, 0, 0, 0, 0, "opcode?", sexp_make_integer(SEXP_OPCODE), 0),
+_OP(OPC_TYPE_PREDICATE, OP_TYPEP,  1, 0, 0, 0, 0, "input-port?", sexp_make_integer(SEXP_IPORT), 0),
+_OP(OPC_TYPE_PREDICATE, OP_TYPEP,  1, 0, 0, 0, 0, "output-port?", sexp_make_integer(SEXP_OPORT), 0),
 _OP(OPC_GENERIC, OP_APPLY1, 2, 0, SEXP_PROCEDURE, SEXP_PAIR, 0, "apply1", 0, NULL),
 _OP(OPC_GENERIC, OP_CALLCC, 1, SEXP_PROCEDURE, 0, 0, 0, "call-with-current-continuation", 0, NULL),
 _OP(OPC_GENERIC, OP_RAISE, 1, SEXP_STRING, 0, 0, 0, "raise", 0, NULL),
@@ -89,7 +89,7 @@ _FN1(SEXP_FIXNUM, "scheme-report-environment", 0, sexp_make_standard_env),
 _FN2(SEXP_STRING, SEXP_ENV, "%load", 0, sexp_load),
 _FN2(SEXP_EXCEPTION, SEXP_OPORT, "print-exception", 0, sexp_print_exception),
 _FN1(SEXP_EXCEPTION, "exception-type", 0, sexp_exception_type_func),
-_FN6(SEXP_SYMBOL, SEXP_STRING, "make-exception", 0, sexp_make_exception),
+_FN5(SEXP_SYMBOL, SEXP_STRING, "make-exception", 0, sexp_make_exception),
 _FN2OPT(SEXP_FIXNUM, SEXP_CHAR, "make-string", sexp_make_character(' '), sexp_make_string),
 _FN3(SEXP_STRING, SEXP_STRING, "string-cmp", 0, sexp_string_cmp),
 _FN3(SEXP_STRING, SEXP_FIXNUM, "substring", 0, sexp_substring),
@@ -124,6 +124,25 @@ _FN1(SEXP_STRING, "open-input-string", 0, sexp_make_input_string_port),
 _FN1(SEXP_OPORT, "get-output-string", 0, sexp_get_output_string),
 #if USE_DEBUG
 _FN2(SEXP_PROCEDURE, SEXP_OPORT, "disasm", 0, sexp_disasm),
+#endif
+#if PLAN9
+_FN0("random-integer", 0, sexp_rand),
+_FN1(SEXP_FIXNUM, "random-seed", 0, sexp_srand),
+_FN0("current-directory", 0, sexp_getwd),
+_FN0("current-user", 0, sexp_getuser),
+_FN0("system-name", 0, sexp_sysname),
+_FN1(SEXP_IPORT, "port-fileno", 0, sexp_fileno),
+_FN2(SEXP_FIXNUM, SEXP_STRING, "fileno->port", 0, sexp_fdopen),
+_FN0("fork", 0, sexp_fork),
+_FN2(SEXP_STRING, SEXP_PAIR, "exec", 0, sexp_exec),
+_FN1(SEXP_STRING, "exits", 0, sexp_exits),
+_FN2(SEXP_FIXNUM, SEXP_FIXNUM, "dup", 0, sexp_dup),
+_FN0("pipe", 0, sexp_pipe),
+_FN1(SEXP_FIXNUM, "sleep", 0, sexp_sleep),
+_FN1(SEXP_STRING, "getenv", 0, sexp_getenv),
+_FN1(SEXP_STRING, "change-directory", 0, sexp_chdir),
+_FN0("wait", 0, sexp_wait),
+_FN2(SEXP_FIXNUM, SEXP_STRING, "post-note", 0, sexp_postnote),
 #endif
 };
 

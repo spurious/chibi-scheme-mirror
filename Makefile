@@ -2,13 +2,13 @@
 
 .PHONY: all doc dist clean cleaner test install uninstall
 
-CC     ?= cc
-PREFIX ?= /usr/local
-BINDIR ?= $(PREFIX)/bin
-LIBDIR ?= $(PREFIX)/lib
+CC       ?= cc
+PREFIX   ?= /usr/local
+BINDIR   ?= $(PREFIX)/bin
+LIBDIR   ?= $(PREFIX)/lib
 SOLIBDIR ?= $(PREFIX)/lib
-INCDIR ?= $(PREFIX)/include/chibi
-MODDIR ?= $(PREFIX)/share/chibi
+INCDIR   ?= $(PREFIX)/include/chibi
+MODDIR   ?= $(PREFIX)/share/chibi
 
 DESTDIR ?=
 
@@ -57,14 +57,14 @@ XCPPFLAGS := $(CPPFLAGS) -Iinclude
 endif
 
 XLDFLAGS  := $(LDFLAGS) $(GCLDFLAGS) -lm
-XCFLAGS   := -Wall -g $(CFLAGS)
+XCFLAGS   := -Wall -g3 $(CFLAGS)
 
 INCLUDES = include/chibi/sexp.h include/chibi/config.h include/chibi/install.h
 
 include/chibi/install.h: Makefile
 	echo '#define sexp_module_dir "'$(MODDIR)'"' > $@
 
-sexp.o: sexp.c gc.c $(INCLUDES) Makefile
+sexp.o: sexp.c gc.c opt/bignum.c $(INCLUDES) Makefile
 	$(CC) -c $(XCPPFLAGS) $(XCFLAGS) $(CLIBFLAGS) -o $@ $<
 
 eval.o: eval.c debug.c opcodes.c include/chibi/eval.h $(INCLUDES) Makefile
@@ -91,7 +91,7 @@ cleaner: clean
 
 test-basic: chibi-scheme$(EXE)
 	@for f in tests/basic/*.scm; do \
-	    ./chibi-scheme $$f >$${f%.scm}.out 2>$${f%.scm}.err; \
+	    ./chibi-scheme$(EXE) $$f >$${f%.scm}.out 2>$${f%.scm}.err; \
 	    if diff -q $${f%.scm}.out $${f%.scm}.res; then \
 	        echo "[PASS] $${f%.scm}"; \
 	    else \
@@ -99,8 +99,11 @@ test-basic: chibi-scheme$(EXE)
 	    fi; \
 	done
 
-test: chibi-scheme
-	./chibi-scheme tests/r5rs-tests.scm
+test-numbers: chibi-scheme$(EXE)
+	./chibi-scheme$(EXE) tests/numeric-tests.scm
+
+test: chibi-scheme$(EXE)
+	./chibi-scheme$(EXE) tests/r5rs-tests.scm
 
 install: chibi-scheme$(EXE)
 	mkdir -p $(DESTDIR)$(BINDIR)

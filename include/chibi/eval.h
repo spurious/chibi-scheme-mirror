@@ -10,19 +10,9 @@
 /************************* additional types ***************************/
 
 #define INIT_BCODE_SIZE 128
-#define INIT_STACK_SIZE 1024
+#define INIT_STACK_SIZE 8192
 
 #define sexp_init_file "init.scm"
-
-/* procedure types */
-typedef sexp (*sexp_proc0) ();
-typedef sexp (*sexp_proc1) (sexp);
-typedef sexp (*sexp_proc2) (sexp, sexp);
-typedef sexp (*sexp_proc3) (sexp, sexp, sexp);
-typedef sexp (*sexp_proc4) (sexp, sexp, sexp, sexp);
-typedef sexp (*sexp_proc5) (sexp, sexp, sexp, sexp, sexp);
-typedef sexp (*sexp_proc6) (sexp, sexp, sexp, sexp, sexp, sexp);
-typedef sexp (*sexp_proc7) (sexp, sexp, sexp, sexp, sexp, sexp, sexp);
 
 enum core_form_names {
   CORE_DEFINE = 1,
@@ -33,7 +23,7 @@ enum core_form_names {
   CORE_QUOTE,
   CORE_DEFINE_SYNTAX,
   CORE_LET_SYNTAX,
-  CORE_LETREC_SYNTAX,
+  CORE_LETREC_SYNTAX
 };
 
 enum opcode_classes {
@@ -47,7 +37,7 @@ enum opcode_classes {
   OPC_CONSTRUCTOR,
   OPC_ACCESSOR,
   OPC_PARAMETER,
-  OPC_FOREIGN,
+  OPC_FOREIGN
 };
 
 enum opcode_names {
@@ -123,18 +113,18 @@ enum opcode_names {
   OP_READ_CHAR,
   OP_PEEK_CHAR,
   OP_RET,
-  OP_DONE,
+  OP_DONE
 };
 
 /**************************** prototypes ******************************/
 
-DLLEXPORT void sexp_scheme_init();
-DLLEXPORT sexp sexp_apply(sexp context, sexp proc, sexp args);
-DLLEXPORT sexp sexp_eval(sexp context, sexp obj);
-DLLEXPORT sexp sexp_eval_string(sexp context, char *str);
-DLLEXPORT sexp sexp_load(sexp context, sexp expr, sexp env);
-DLLEXPORT sexp sexp_make_context(sexp context, sexp stack, sexp env);
-DLLEXPORT void sexp_warn_undefs(sexp ctx, sexp from, sexp to, sexp out);
+SEXP_API void sexp_scheme_init(void);
+SEXP_API sexp sexp_apply(sexp context, sexp proc, sexp args);
+SEXP_API sexp sexp_eval(sexp context, sexp obj);
+SEXP_API sexp sexp_eval_string(sexp context, char *str);
+SEXP_API sexp sexp_load(sexp context, sexp expr, sexp env);
+SEXP_API sexp sexp_make_context(sexp context, sexp stack, sexp env);
+SEXP_API void sexp_warn_undefs(sexp ctx, sexp from, sexp to, sexp out);
 
 #endif /* ! SEXP_EVAL_H */
 
