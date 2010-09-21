@@ -338,6 +338,11 @@ void sexp_destroy_context (sexp ctx) {
   size_t sum_freed;
   if (sexp_context_heap(ctx)) {
     heap = sexp_context_heap(ctx);
+    sexp_gc_mark(ctx) = 1;
+#if ! SEXP_USE_GLOBAL_TYPES
+    sexp_gc_mark(sexp_context_globals(ctx)) = 1;
+    sexp_gc_mark(sexp_global(ctx, SEXP_G_TYPES)) = 1;
+#endif
     sexp_sweep(ctx, &sum_freed); /* sweep w/o mark to run finalizers */
     sexp_context_heap(ctx) = NULL;
     for ( ; heap; heap=tmp) {
@@ -766,7 +771,7 @@ sexp sexp_substring_op (sexp ctx sexp_api_params(self, n), sexp str, sexp start,
 sexp sexp_string_concatenate_op (sexp ctx sexp_api_params(self, n), sexp str_ls, sexp sep) {
   sexp res, ls;
   sexp_uint_t len=0, i=0, sep_len=0;
-  char *p, *csep;
+  char *p, *csep=NULL;
   for (ls=str_ls; sexp_pairp(ls); ls=sexp_cdr(ls), i++)
     if (! sexp_stringp(sexp_car(ls)))
       return sexp_type_exception(ctx, self, SEXP_STRING, sexp_car(ls));
@@ -916,13 +921,18 @@ sexp sexp_make_cpointer (sexp ctx, sexp_uint_t type_id, void *value,
 #define sexp_stream_size(vec) sexp_vector_ref((sexp)vec, SEXP_TWO)
 #define sexp_stream_pos(vec) sexp_vector_ref((sexp)vec, SEXP_THREE)
 
+#define sexp_stream_ctx_set(vec, x) sexp_vector_set((sexp)vec, SEXP_ZERO, x)
+#define sexp_stream_buf_set(vec, x) sexp_vector_set((sexp)vec, SEXP_ONE, x)
+#define sexp_stream_size_set(vec, x) sexp_vector_set((sexp)vec, SEXP_TWO, x)
+#define sexp_stream_pos_set(vec, x) sexp_vector_set((sexp)vec, SEXP_THREE, x)
+
 int sstream_read (void *vec, char *dst, int n) {
   sexp_uint_t len = sexp_unbox_fixnum(sexp_stream_size(vec));
   sexp_uint_t pos = sexp_unbox_fixnum(sexp_stream_pos(vec));
   if (pos >= len) return 0;
   if (n > (len - pos)) n = (len - pos);
   memcpy(dst, sexp_string_data(sexp_stream_buf(vec))+pos, n);
-  sexp_stream_pos(vec) = sexp_make_fixnum(n);
+  sexp_stream_pos_set(vec, sexp_make_fixnum(n));
   return n;
 }
 
@@ -939,11 +949,11 @@ int sstream_write (void *vec, const char *src, int n) {
     memcpy(sexp_string_data(newbuf),
            sexp_string_data(sexp_stream_buf(vec)),
            pos);
-    sexp_stream_buf(vec) = newbuf;
-    sexp_stream_size(vec) = sexp_make_fixnum(newpos*2);
+    sexp_stream_buf_set(vec, newbuf);
+    sexp_stream_size_set(vec, sexp_make_fixnum(newpos*2));
   }
   memcpy(sexp_string_data(sexp_stream_buf(vec))+pos, src, n);
-  sexp_stream_pos(vec) = sexp_make_fixnum(newpos);
+  sexp_stream_pos_set(vec, sexp_make_fixnum(newpos));
   return n;
 }
 
@@ -956,7 +966,7 @@ off_t sstream_seek (void *vec, off_t offset, int whence) {
   } else {                      /* SEEK_END */
     pos = sexp_unbox_fixnum(sexp_stream_size(vec)) + offset;
   }
-  sexp_stream_pos(vec) = sexp_make_fixnum(pos);
+  sexp_stream_pos_set(vec, sexp_make_fixnum(pos));
   return pos;
 }
 
@@ -966,10 +976,10 @@ sexp sexp_make_input_string_port_op (sexp ctx sexp_api_params(self, n), sexp str
   sexp_gc_var1(cookie);
   sexp_gc_preserve1(ctx, cookie);
   cookie = sexp_make_vector(ctx, sexp_make_fixnum(4), SEXP_VOID);
-  sexp_stream_ctx(cookie) = ctx;
-  sexp_stream_buf(cookie) = str;
-  sexp_stream_size(cookie) = sexp_make_fixnum(sexp_string_length(str));
-  sexp_stream_pos(cookie) = SEXP_ZERO;
+  sexp_stream_ctx_set(cookie, ctx);
+  sexp_stream_buf_set(cookie, str);
+  sexp_stream_size_set(cookie, sexp_make_fixnum(sexp_string_length(str)));
+  sexp_stream_pos_set(cookie, SEXP_ZERO);
   in = funopen(cookie, &sstream_read, NULL, &sstream_seek, NULL);
   res = sexp_make_input_port(ctx, in, SEXP_FALSE);
   sexp_port_cookie(res) = cookie;
@@ -984,10 +994,10 @@ sexp sexp_make_output_string_port_op (sexp ctx sexp_api_params(self, n)) {
   sexp_gc_preserve1(ctx, cookie);
   size = sexp_make_fixnum(SEXP_INIT_STRING_PORT_SIZE);
   cookie = sexp_make_vector(ctx, sexp_make_fixnum(4), SEXP_VOID);
-  sexp_stream_ctx(cookie) = ctx;
-  sexp_stream_buf(cookie) = sexp_make_string(ctx, size, SEXP_VOID);
-  sexp_stream_size(cookie) = size;
-  sexp_stream_pos(cookie) = SEXP_ZERO;
+  sexp_stream_ctx_set(cookie, ctx);
+  sexp_stream_buf_set(cookie, sexp_make_string(ctx, size, SEXP_VOID));
+  sexp_stream_size_set(cookie, size);
+  sexp_stream_pos_set(cookie, SEXP_ZERO);
   out = funopen(cookie, NULL, &sstream_write, &sstream_seek, NULL);
   res = sexp_make_output_port(ctx, out, SEXP_FALSE);
   sexp_port_cookie(res) = cookie;
