@@ -94,7 +94,8 @@
     => (lambda (index-file)
          ;; Generate and restart a new request with explicit index file.
          (let* ((uri (request-uri request))
-                (path2 (make-path (uri-path uri) index-file)))
+                (path2 (make-path (uri-path uri)
+                                  (path-strip-directory index-file))))
            (restart
             (request-with-uri request (uri-with-path uri path2))))))
    (else
@@ -166,9 +167,9 @@
               (cond
                ((equal? uri uri2)
                 (lp (cdr ls)))
-               ((string->path-uri uri2)
+               ((string->path-uri 'http uri2)
                 => (lambda (uri)
-                     (helper (request-with-uri request uri) next restart)))
+                     (helper cfg (request-with-uri request uri) next restart)))
                (else
                 (log-warn "invalid rewritten uri: " uri2)
                 (lp (cdr ls))))))))))
